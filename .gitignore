@@ -1,0 +1,15 @@
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log
+*.log
+
+# Backup
+backup/
+*.sql.bak
