@@ -49,7 +49,7 @@ if ($page == 'beranda'):
 
     <div class="hero-banner">
         <span class="hero-badge">LABORATORIUM LOGISTIK & RANTAI PASOK</span>
-        <h1>Sistem Manajemen Gudang Terpadu</h1>
+        <h1>Sistem Manajemen Gudang UNJANI</h1>
         <p>Pantau sirkulasi barang masuk, keluar, dan kapasitas rak simpan secara real-time untuk operasional gudang yang efektif dan akurat.</p>
     </div>
     
@@ -58,9 +58,9 @@ if ($page == 'beranda'):
             <div class="stat-card blue">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Total Jenis Barang</div>
+                        <div class="stat-label">Total Barang</div>
                         <div class="stat-value mt-3"><?= $total_barang ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-box"></i> Master SKU</small>
+                        <small class="text-muted d-block mt-2">Master SKU</small>
                     </div>
                     <div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-box-seam-fill"></i></div>
                 </div>
@@ -70,9 +70,9 @@ if ($page == 'beranda'):
             <div class="stat-card green">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Masuk (Hari Ini)</div>
+                        <div class="stat-label">Masuk Hari Ini</div>
                         <div class="stat-value mt-3 text-success"><?= $masuk_hari ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-down-circle"></i> Total Inbound</small>
+                        <small class="text-muted d-block mt-2">Total Inbound</small>
                     </div>
                     <div class="stat-icon" style="background:#d1fae5;color:#10b981;"><i class="bi bi-arrow-down-circle-fill"></i></div>
                 </div>
@@ -82,9 +82,9 @@ if ($page == 'beranda'):
             <div class="stat-card yellow">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Keluar (Hari Ini)</div>
+                        <div class="stat-label">Keluar Hari Ini</div>
                         <div class="stat-value mt-3" style="color:#f59e0b;"><?= $keluar_hari ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-up-circle"></i> Total Outbound</small>
+                        <small class="text-muted d-block mt-2">Total Outbound</small>
                     </div>
                     <div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-arrow-up-circle-fill"></i></div>
                 </div>
@@ -94,9 +94,9 @@ if ($page == 'beranda'):
             <div class="stat-card cyan">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Total Volume Stok</div>
+                        <div class="stat-label">Total Stok</div>
                         <div class="stat-value mt-3" style="color:#06b6d4;"><?= $total_stok ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-stack"></i> Akumulasi Unit</small>
+                        <small class="text-muted d-block mt-2">Akumulasi Unit</small>
                     </div>
                     <div class="stat-icon" style="background:#cffafe;color:#06b6d4;"><i class="bi bi-stack"></i></div>
                 </div>
@@ -104,133 +104,13 @@ if ($page == 'beranda'):
         </div>
     </div>
     
-    <div class="row g-3 mb-4">
-        <div class="col-lg-8">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-graph-up-arrow text-primary"></i> Tren Mutasi Stok</div>
-                <div class="panel-subtitle">Perbandingan arus barang masuk dan keluar 7 hari terakhir</div>
-                <div style="height: 300px; position: relative;"><canvas id="chartMutasi"></canvas></div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-pie-chart-fill text-primary"></i> Kapasitas Gudang</div>
-                <div class="panel-subtitle">Estimasi beban area penyimpanan rak</div>
-                <?php
-                $zona = mysqli_query($koneksi, "SELECT k.nama_kategori, k.kode_zona, COUNT(b.id) as jml_barang, IFNULL(SUM(b.stok),0) as total_stok FROM kategori k LEFT JOIN barang b ON b.kategori_id = k.id GROUP BY k.id ORDER BY k.kode_zona");
-                $warna_map = ['A'=>'#2563eb','B'=>'#10b981','C'=>'#06b6d4','D'=>'#f59e0b'];
-                while ($z = mysqli_fetch_assoc($zona)):
-                    $persen = min(100, $z['jml_barang'] * 15);
-                    $w = $warna_map[$z['kode_zona']] ?? '#6b7280';
-                ?>
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-semibold" style="font-size:13.5px;">
-                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:<?= $w ?>;margin-right:6px;"></span>
-                            Zona <?= $z['kode_zona'] ?> <span class="text-muted" style="font-weight:400;font-size:12.5px;">(<?= $z['nama_kategori'] ?>)</span>
-                        </span>
-                        <strong style="color:<?= $w ?>;font-size:15px;"><?= $persen ?>%</strong>
-                    </div>
-                    <div class="progress"><div class="progress-bar" style="width:<?= $persen ?>%;background:<?= $w ?>;"></div></div>
-                    <small class="text-muted d-block mt-1" style="font-size:12px;"><?= $z['jml_barang'] ?> jenis · <?= $z['total_stok'] ?> unit</small>
-                </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
-    </div>
-    
-    <!-- TOP 5 & STATISTIK CEPAT -->
-    <div class="row g-3 mb-4">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-trophy-fill text-warning"></i> Top 5 Barang Sering Keluar</div>
-                <div class="panel-subtitle">Berdasarkan total frekuensi keluar</div>
-                <?php
-                $top5 = mysqli_query($koneksi, "
-                    SELECT b.nama_barang, b.kode_barang, SUM(bk.jumlah) AS total
-                    FROM barang_keluar bk 
-                    JOIN barang b ON bk.barang_id = b.id 
-                    GROUP BY b.id 
-                    ORDER BY total DESC 
-                    LIMIT 5
-                ");
-                $max_val = 0;
-                $top_data = [];
-                while ($t = mysqli_fetch_assoc($top5)) {
-                    $top_data[] = $t;
-                    if ($t['total'] > $max_val) $max_val = $t['total'];
-                }
-                if (count($top_data) == 0): ?>
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-bar-chart" style="font-size:40px;opacity:0.3;"></i>
-                        <div class="mt-2">Belum ada data transaksi keluar</div>
-                    </div>
-                <?php else:
-                    $rank = 1;
-                    $badges = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-                    foreach ($top_data as $t):
-                        $persen = $max_val > 0 ? ($t['total'] / $max_val * 100) : 0;
-                ?>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span style="font-size:13.5px;font-weight:600;">
-                            <?= $badges[$rank-1] ?> <?= $t['nama_barang'] ?>
-                            <small class="text-muted">(<?= $t['kode_barang'] ?>)</small>
-                        </span>
-                        <strong style="color:#2563eb;"><?= $t['total'] ?> unit</strong>
-                    </div>
-                    <div class="progress" style="height:8px;">
-                        <div class="progress-bar" style="width:<?= $persen ?>%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);"></div>
-                    </div>
-                </div>
-                <?php 
-                    $rank++;
-                    endforeach;
-                endif; ?>
-            </div>
-        </div>
-        
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-info-circle-fill text-info"></i> Statistik Cepat</div>
-                <div class="panel-subtitle">Ringkasan kondisi gudang</div>
-                <?php
-                $stok_kritis = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) c FROM barang WHERE stok <= stok_minimal"))['c'];
-                $stok_habis = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) c FROM barang WHERE stok = 0"))['c'];
-                $total_transaksi = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT (SELECT COUNT(*) FROM barang_masuk) + (SELECT COUNT(*) FROM barang_keluar) c"))['c'];
-                $nilai_inventaris = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT IFNULL(SUM(stok * harga), 0) t FROM barang"))['t'];
-                ?>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="p-3" style="background:#fef3c7;border-radius:10px;border-left:4px solid #f59e0b;">
-                            <small class="text-muted d-block">Stok Kritis</small>
-                            <strong style="font-size:24px;color:#d97706;"><?= $stok_kritis ?></strong>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3" style="background:#fee2e2;border-radius:10px;border-left:4px solid #ef4444;">
-                            <small class="text-muted d-block">Stok Habis</small>
-                            <strong style="font-size:24px;color:#dc2626;"><?= $stok_habis ?></strong>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3" style="background:#dbeafe;border-radius:10px;border-left:4px solid #2563eb;">
-                            <small class="text-muted d-block">Total Transaksi</small>
-                            <strong style="font-size:24px;color:#1e40af;"><?= $total_transaksi ?></strong>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3" style="background:#d1fae5;border-radius:10px;border-left:4px solid #10b981;">
-                            <small class="text-muted d-block">Nilai Inventaris</small>
-                            <strong style="font-size:16px;color:#065f46;"><?= rupiah($nilai_inventaris) ?></strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <div class="panel mb-4">
+        <div class="panel-title"><i class="bi bi-graph-up-arrow text-primary"></i> Tren Mutasi Stok 7 Hari Terakhir</div>
+        <div class="panel-subtitle">Perbandingan arus barang masuk dan keluar</div>
+        <div style="height: 280px; position: relative;"><canvas id="chartMutasi"></canvas></div>
+    </div>
+    
+    <div class="panel">
         <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
             <div>
                 <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Peringatan Stok Minimis</div>
