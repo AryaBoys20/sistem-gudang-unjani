@@ -422,6 +422,5 @@ elseif ($jenis == 'minim'):
     Dokumen ini dicetak secara otomatis dari Sistem Informasi Manajemen Pergudangan WMS UNJANI<br>
     Dicetak pada: <?= date('d F Y, H:i:s') ?> WIB
 </div>
-
 </body>
 </html>
