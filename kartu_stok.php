@@ -44,7 +44,7 @@ if ($barang_id > 0) {
             <small>Riwayat transaksi per barang</small>
         </div>
         <?php if ($barang): ?>
-        <button onclick="window.print()" class="btn btn-primary">
+        <button onclick="window.print()" class="btn btn-primary">                                                                                                                                                                                                                   
             <i class="bi bi-printer-fill"></i> Cetak
         </button>
         <?php endif; ?>

@@ -1,3 +1,4 @@
+
 <?php
 require_once 'config/koneksi.php';
 
@@ -5,9 +6,14 @@ $page  = $_GET['page'] ?? 'beranda';
 $msg   = $_GET['msg'] ?? '';
 $error = $_GET['error'] ?? '';
 
+// Halaman mandiri: jangan muat header utama lebih dulu
+if ($page === 'kartu_stok') {
+    require 'kartu_stok.php';
+    exit;
+}
+
 require_once 'includes/header.php';
 ?>
-
 <!-- NOTIFIKASI -->
 <?php if ($msg == 'sukses'): ?>
 <div class="alert alert-success alert-dismissible fade show" id="notifAlert">
@@ -48,9 +54,9 @@ if ($page == 'beranda'):
 ?>
 
     <div class="hero-banner">
-        <span class="hero-badge">LABORATORIUM LOGISTIK & RANTAI PASOK</span>
-        <h1>Sistem Manajemen Gudang Terpadu</h1>
-        <p>Pantau sirkulasi barang masuk, keluar, dan kapasitas rak simpan secara real-time untuk operasional gudang yang efektif dan akurat.</p>
+        <span class="hero-badge">LABORATORIUM LOGISTIK UNJANI</span>
+        <h1>Sistem Manajemen Gudang UNJANI</h1>
+        <p>Kelola data persediaan serta pantau pergerakan barang masuk dan keluar gudang.</p>
     </div>
     
     <div class="row g-3 mb-4">
@@ -60,7 +66,7 @@ if ($page == 'beranda'):
                     <div>
                         <div class="stat-label">Total Jenis Barang</div>
                         <div class="stat-value mt-3"><?= $total_barang ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-box"></i> Master SKU</small>
+                        <small class="text-muted d-block mt-2"><i class="bi bi-box"></i> Jenis barang terdaftar</small>
                     </div>
                     <div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-box-seam-fill"></i></div>
                 </div>
@@ -72,7 +78,7 @@ if ($page == 'beranda'):
                     <div>
                         <div class="stat-label">Masuk (Hari Ini)</div>
                         <div class="stat-value mt-3 text-success"><?= $masuk_hari ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-down-circle"></i> Total Inbound</small>
+                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-down-circle"></i>  Jumlah barang masuk</small>
                     </div>
                     <div class="stat-icon" style="background:#d1fae5;color:#10b981;"><i class="bi bi-arrow-down-circle-fill"></i></div>
                 </div>
@@ -84,7 +90,7 @@ if ($page == 'beranda'):
                     <div>
                         <div class="stat-label">Keluar (Hari Ini)</div>
                         <div class="stat-value mt-3" style="color:#f59e0b;"><?= $keluar_hari ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-up-circle"></i> Total Outbound</small>
+                        <small class="text-muted d-block mt-2"><i class="bi bi-arrow-up-circle"></i>  Jumlah barang keluar</small>
                     </div>
                     <div class="stat-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-arrow-up-circle-fill"></i></div>
                 </div>
@@ -96,7 +102,7 @@ if ($page == 'beranda'):
                     <div>
                         <div class="stat-label">Total Volume Stok</div>
                         <div class="stat-value mt-3" style="color:#06b6d4;"><?= $total_stok ?></div>
-                        <small class="text-muted d-block mt-2"><i class="bi bi-stack"></i> Akumulasi Unit</small>
+                        <small class="text-muted d-block mt-2"><i class="bi bi-stack"></i> jumlah seluruh Stock</small>
                     </div>
                     <div class="stat-icon" style="background:#cffafe;color:#06b6d4;"><i class="bi bi-stack"></i></div>
                 </div>
@@ -234,7 +240,7 @@ if ($page == 'beranda'):
         <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
             <div>
                 <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Peringatan Stok Minimis</div>
-                <div class="panel-subtitle mb-0">Perlu re-stock barang berikut untuk hindari out-of-stock</div>
+                <div class="panel-subtitle mb-0">Barang berikut perlu diperiksa dan diisi kembali.</div>
             </div>
             <a href="index.php?page=laporan" class="btn btn-sm btn-outline-primary">Lihat Semua <i class="bi bi-arrow-right"></i></a>
         </div>
@@ -703,14 +709,9 @@ elseif ($page == 'keluar'):
     </div>
 
 
-<?php // ═══════════════════════════════════════
-// KARTU STOK
-// ═══════════════════════════════════════
-elseif ($page == 'kartu_stok'):
-    require 'kartu_stok.php';
-    exit;
+<?php 
 
-// ═══════════════════════════════════════
+
 // RIWAYAT TRANSAKSI
 // ═══════════════════════════════════════
 elseif ($page == 'riwayat'):
