@@ -183,7 +183,7 @@ $judul = $judul_map[$jenis] ?? 'LAPORAN';
 <div class="kop">
     <div class="kop-logo">📦</div>
     <div class="kop-text">
-        <h1>WMS UNJANI</h1>
+        <h1>Sistem Gudang UNJANI</h1>
         <h2>Laboratorium Logistik & Rantai Pasok</h2>
         <p>Sistem Informasi Manajemen Pergudangan</p>
         <p>Jl. Contoh Alamat No. 1, Cimahi, Jawa Barat | Telp: (022) 123-4567</p>

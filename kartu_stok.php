@@ -31,7 +31,7 @@ if ($barang_id > 0) {
         <a class="navbar-brand" href="index.php">
             <i class="bi bi-box-seam-fill"></i> WMS UNJANI
         </a>
-        <a href="index.php?page=barang" class="btn btn-sm btn-outline-light">
+        <a href="index.php" class="btn btn-sm btn-outline-light">
             <i class="bi bi-arrow-left"></i> Kembali
         </a>
     </div>
@@ -40,8 +40,8 @@ if ($barang_id > 0) {
 <div class="container-fluid main-content">
     <div class="page-header">
         <div>
-            <h4><i class="bi bi-file-earmark-text text-primary"></i> Kartu Stok</h4>
-            <small>Riwayat transaksi per barang</small>
+            <h4><i class="bi bi-file-earmark-text text-primary"></i> Kartu Stok Barang</h4>
+            <small>Riwayat transaksi per barang - Lab Logistik UNJANI</small>
         </div>
         <?php if ($barang): ?>
         <button onclick="window.print()" class="btn btn-primary">                                                                                                                                                                                                                   
@@ -50,7 +50,6 @@ if ($barang_id > 0) {
         <?php endif; ?>
     </div>
     
-    <!-- FILTER -->
     <div class="panel mb-3 no-print">
         <form method="GET" action="kartu_stok.php" class="row g-2">
             <div class="col-md-4">
@@ -84,46 +83,25 @@ if ($barang_id > 0) {
     </div>
     
     <?php if ($barang): ?>
-    <!-- INFO BARANG -->
     <div class="panel mb-3">
         <div class="row">
-            <div class="col-md-3">
-                <small class="text-muted">Kode SKU</small>
-                <div><strong><code><?= $barang['kode_barang'] ?></code></strong></div>
-            </div>
-            <div class="col-md-3">
-                <small class="text-muted">Nama Barang</small>
-                <div><strong><?= $barang['nama_barang'] ?></strong></div>
-            </div>
-            <div class="col-md-2">
-                <small class="text-muted">Kategori</small>
-                <div><strong><?= $barang['nama_kategori'] ?? '-' ?></strong></div>
-            </div>
-            <div class="col-md-2">
-                <small class="text-muted">Stok Saat Ini</small>
-                <div><strong style="font-size:20px;color:#2563eb;"><?= $barang['stok'] ?> <?= $barang['satuan'] ?></strong></div>
-            </div>
-            <div class="col-md-2">
-                <small class="text-muted">Lokasi</small>
-                <div><strong><?= $barang['lokasi_rak'] ?></strong></div>
-            </div>
+            <div class="col-md-3"><small class="text-muted">Kode SKU</small><div><strong><code><?= $barang['kode_barang'] ?></code></strong></div></div>
+            <div class="col-md-3"><small class="text-muted">Nama Barang</small><div><strong><?= $barang['nama_barang'] ?></strong></div></div>
+            <div class="col-md-2"><small class="text-muted">Kategori</small><div><strong><?= $barang['nama_kategori'] ?? '-' ?></strong></div></div>
+            <div class="col-md-2"><small class="text-muted">Stok Saat Ini</small><div><strong style="font-size:20px;color:#2563eb;"><?= $barang['stok'] ?> <?= $barang['satuan'] ?></strong></div></div>
+            <div class="col-md-2"><small class="text-muted">Lokasi</small><div><strong><?= $barang['lokasi_rak'] ?></strong></div></div>
         </div>
     </div>
     
-    <!-- RIWAYAT -->
     <div class="panel">
         <div class="panel-title mb-3"><i class="bi bi-clock-history text-primary"></i> Riwayat Transaksi</div>
         <div class="table-responsive">
             <table class="table">
                 <thead>
                     <tr>
-                        <th style="width:50px;">No</th>
-                        <th>Tanggal</th>
-                        <th>Jenis</th>
-                        <th>Keterangan</th>
-                        <th class="text-center">Masuk</th>
-                        <th class="text-center">Keluar</th>
-                        <th class="text-center">Sisa</th>
+                        <th style="width:50px;">No</th><th>Tanggal</th><th>Jenis</th>
+                        <th>Keterangan</th><th class="text-center">Masuk</th>
+                        <th class="text-center">Keluar</th><th class="text-center">Sisa</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -146,10 +124,8 @@ if ($barang_id > 0) {
                     ORDER BY tanggal ASC
                 ");
                 
-                $sum_in = mysqli_fetch_assoc(mysqli_query($koneksi, 
-                    "SELECT IFNULL(SUM(jumlah),0) t FROM barang_masuk WHERE barang_id='$barang_id'"))['t'];
-                $sum_out = mysqli_fetch_assoc(mysqli_query($koneksi, 
-                    "SELECT IFNULL(SUM(jumlah),0) t FROM barang_keluar WHERE barang_id='$barang_id'"))['t'];
+                $sum_in = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT IFNULL(SUM(jumlah),0) t FROM barang_masuk WHERE barang_id='$barang_id'"))['t'];
+                $sum_out = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT IFNULL(SUM(jumlah),0) t FROM barang_keluar WHERE barang_id='$barang_id'"))['t'];
                 $stok_awal = $barang['stok'] - $sum_in + $sum_out;
                 
                 $no = 1;
@@ -162,8 +138,7 @@ if ($barang_id > 0) {
                     <td class="text-center">-</td>
                     <td class="text-center"><strong><?= $stok_awal ?></strong></td>
                 </tr>
-                <?php 
-                if (mysqli_num_rows($q) == 0): ?>
+                <?php if (mysqli_num_rows($q) == 0): ?>
                     <tr><td colspan="7" class="text-center text-muted py-4">
                         <i class="bi bi-inbox" style="font-size:30px;"></i>
                         <div>Tidak ada transaksi di periode ini</div>
@@ -174,13 +149,11 @@ if ($barang_id > 0) {
                 <tr>
                     <td><?= $no++ ?></td>
                     <td><?= tglIndo($r['tanggal']) ?></td>
-                    <td>
-                        <?php if ($r['jenis'] == 'Masuk'): ?>
-                            <span class="badge bg-success">Masuk</span>
-                        <?php else: ?>
-                            <span class="badge bg-danger">Keluar</span>
-                        <?php endif; ?>
-                    </td>
+                    <td><?php if ($r['jenis'] == 'Masuk'): ?>
+                        <span class="badge bg-success">Masuk</span>
+                    <?php else: ?>
+                        <span class="badge bg-danger">Keluar</span>
+                    <?php endif; ?></td>
                     <td><?= $r['ket'] ?></td>
                     <td class="text-center"><?= $r['masuk'] > 0 ? '<strong class="text-success">+' . $r['masuk'] . '</strong>' : '-' ?></td>
                     <td class="text-center"><?= $r['keluar'] > 0 ? '<strong class="text-danger">-' . $r['keluar'] . '</strong>' : '-' ?></td>
@@ -206,17 +179,8 @@ if ($barang_id > 0) {
     <?php endif; ?>
 </div>
 
-<footer>
-    <strong>&copy; <?= date('Y') ?> WMS UNJANI</strong> — Sistem Informasi Manajemen Pergudangan
-</footer>
-
+<footer><strong>&copy; <?= date('Y') ?> WMS UNJANI</strong> — Sistem Informasi Manajemen Pergudangan</footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<style>
-@media print {
-    .no-print, .navbar, footer { display: none !important; }
-    .main-content { padding: 0 !important; }
-}
-</style>
+<style>@media print { .no-print, .navbar, footer { display: none !important; } }</style>
 </body>
 </html>
