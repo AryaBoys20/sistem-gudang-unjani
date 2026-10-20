@@ -8,7 +8,7 @@ $sampai  = $_GET['sampai'] ?? date('Y-m-d');
 $judul_map = [
     'stok'   => 'LAPORAN STOK BARANG',
     'masuk'  => 'LAPORAN BARANG MASUK',
-    'keluar' => 'LAPORAN BARANG KELUAR',
+    'keluar' => 'LAPORAN PEMINJAMAN BARANG',
     'minim'  => 'LAPORAN STOK MINIM (PERLU RESTOCK)'
 ];
 $judul = $judul_map[$jenis] ?? 'LAPORAN';
@@ -268,10 +268,9 @@ if ($jenis == 'stok'):
 
 <?php // ═══ LAPORAN MASUK ═══
 elseif ($jenis == 'masuk'):
-    $q = mysqli_query($koneksi, "SELECT bm.*, b.kode_barang, b.nama_barang, b.satuan, s.nama_supplier 
+    $q = mysqli_query($koneksi, "SELECT bm.*, b.kode_barang, b.nama_barang, b.satuan 
         FROM barang_masuk bm 
         JOIN barang b ON bm.barang_id = b.id 
-        LEFT JOIN supplier s ON bm.supplier_id = s.id 
         WHERE bm.tanggal BETWEEN '$dari' AND '$sampai'
         ORDER BY bm.tanggal ASC, bm.id ASC");
     $total_qty = 0;
@@ -283,10 +282,7 @@ elseif ($jenis == 'masuk'):
                 <th class="text-center">Tanggal</th>
                 <th>Kode SKU</th>
                 <th>Nama Barang</th>
-                <th>Supplier</th>
-                <th class="text-center">Jumlah</th>
-                <th>No PO</th>
-                <th>Keterangan</th>
+                <th class="text-center">Jumlah Masuk</th>
             </tr>
         </thead>
         <tbody>
@@ -298,10 +294,7 @@ elseif ($jenis == 'masuk'):
             <td class="text-center"><?= tglIndo($r['tanggal']) ?></td>
             <td><strong><?= $r['kode_barang'] ?></strong></td>
             <td><?= $r['nama_barang'] ?></td>
-            <td><?= $r['nama_supplier'] ?? '-' ?></td>
             <td class="text-center text-bold">+<?= $r['jumlah'] ?> <?= $r['satuan'] ?></td>
-            <td><?= $r['no_po'] ?: '-' ?></td>
-            <td><?= $r['keterangan'] ?: '-' ?></td>
         </tr>
         <?php endwhile; ?>
         </tbody>
@@ -314,7 +307,7 @@ elseif ($jenis == 'masuk'):
     </div>
 
 
-<?php // ═══ LAPORAN KELUAR ═══
+<?php // ═══ LAPORAN KELUAR (PEMINJAMAN) ═══
 elseif ($jenis == 'keluar'):
     $q = mysqli_query($koneksi, "SELECT bk.*, b.kode_barang, b.nama_barang, b.satuan 
         FROM barang_keluar bk 
@@ -330,10 +323,9 @@ elseif ($jenis == 'keluar'):
                 <th class="text-center">Tanggal</th>
                 <th>Kode SKU</th>
                 <th>Nama Barang</th>
-                <th>Tujuan</th>
+                <th>Nama Peminjam</th>
+                <th>No Identitas</th>
                 <th class="text-center">Jumlah</th>
-                <th>No SJ</th>
-                <th>Keterangan</th>
             </tr>
         </thead>
         <tbody>
@@ -345,17 +337,16 @@ elseif ($jenis == 'keluar'):
             <td class="text-center"><?= tglIndo($r['tanggal']) ?></td>
             <td><strong><?= $r['kode_barang'] ?></strong></td>
             <td><?= $r['nama_barang'] ?></td>
-            <td><?= $r['tujuan'] ?: '-' ?></td>
+            <td><strong><?= $r['nama_peminjam'] ?></strong></td>
+            <td><?= $r['no_identitas'] ?></td>
             <td class="text-center text-bold">-<?= $r['jumlah'] ?> <?= $r['satuan'] ?></td>
-            <td><?= $r['no_surat_jalan'] ?: '-' ?></td>
-            <td><?= $r['keterangan'] ?: '-' ?></td>
         </tr>
         <?php endwhile; ?>
         </tbody>
     </table>
     <div class="summary">
         <div class="summary-box">
-            <div class="label">Total Barang Keluar</div>
+            <div class="label">Total Peminjaman</div>
             <div class="value"><?= number_format($total_qty, 0, ',', '.') ?> unit</div>
         </div>
     </div>
