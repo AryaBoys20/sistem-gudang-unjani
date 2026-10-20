@@ -29,9 +29,9 @@ require_once 'includes/header.php';
     <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Stok tidak cukup!</strong> Transaksi dibatalkan.
     <button class="btn-close" data-bs-dismiss="alert"></button>
 </div>
-<?php elseif ($error == 'jumlah'): ?>
+<?php elseif (!empty($error)): ?>
 <div class="alert alert-danger alert-dismissible fade show" id="notifAlert">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Jumlah tidak valid!</strong> Harus lebih dari 0.
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error!</strong> <?= htmlspecialchars($error) ?>
     <button class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 <?php endif; ?>
@@ -48,9 +48,9 @@ if ($page == 'beranda'):
 ?>
 
     <div class="hero-banner">
-        <span class="hero-badge">LABORATORIUM LOGISTIK & RANTAI PASOK</span>
-        <h1>Sistem Manajemen Gudang UNJANI</h1>
-        <p>Pantau sirkulasi barang masuk, keluar, dan kapasitas rak simpan secara real-time untuk operasional gudang yang efektif dan akurat.</p>
+        <span class="hero-badge"> SISTEM PERGUDANGAN </span>
+        <h1>Sistem Manajemen Gudang</h1>
+        <p>Pantau sirkulasi barang masuk dan keluar secara real-time untuk operasional gudang yang efektif dan akurat.</p>
     </div>
     
     <div class="row g-3 mb-4">
@@ -111,33 +111,22 @@ if ($page == 'beranda'):
     </div>
     
     <div class="panel">
-        <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
-            <div>
-                <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Peringatan Stok Minimis</div>
-                <div class="panel-subtitle mb-0">Perlu re-stock barang berikut untuk hindari out-of-stock</div>
-            </div>
-            <a href="index.php?page=laporan" class="btn btn-sm btn-outline-primary">Lihat Semua <i class="bi bi-arrow-right"></i></a>
-        </div>
-        <div class="table-responsive">
+        <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Peringatan Stok Minimis</div>
+        <div class="table-responsive mt-3">
             <table class="table align-middle mb-0">
-                <thead><tr><th>BARANG</th><th>KODE SKU</th><th>LOKASI RAK</th><th>SISA STOK</th><th>STATUS</th><th>AKSI</th></tr></thead>
+                <thead><tr><th>BARANG</th><th>KODE SKU</th><th>SISA STOK</th><th>STATUS</th><th>AKSI</th></tr></thead>
                 <tbody>
                 <?php
                 $q = mysqli_query($koneksi, "SELECT * FROM barang WHERE stok <= stok_minimal ORDER BY stok ASC");
                 if (mysqli_num_rows($q) == 0): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-5">
-                        <i class="bi bi-check-circle-fill text-success" style="font-size:40px;"></i>
-                        <div class="mt-2 fw-semibold">Semua stok aman!</div>
-                        <small>Tidak ada barang yang perlu di-restock</small>
-                    </td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Semua stok aman!</td></tr>
                 <?php else: while ($r = mysqli_fetch_assoc($q)): ?>
                 <tr>
                     <td><strong><?= $r['nama_barang'] ?></strong></td>
                     <td><code><?= $r['kode_barang'] ?></code></td>
-                    <td><?= $r['lokasi_rak'] ?></td>
                     <td><strong class="text-danger"><?= $r['stok'] ?> <?= $r['satuan'] ?></strong></td>
                     <td><?= badgeStok($r['stok'], $r['stok_minimal']) ?></td>
-                    <td><a href="index.php?page=masuk" class="btn btn-sm btn-outline-success"><i class="bi bi-plus-circle"></i> Restock</a></td>
+                    <td><a href="index.php?page=masuk" class="btn btn-sm btn-outline-success">Restock</a></td>
                 </tr>
                 <?php endwhile; endif; ?>
                 </tbody>
@@ -160,48 +149,27 @@ if ($page == 'beranda'):
     new Chart(document.getElementById('chartMutasi'), {
         type: 'bar',
         data: { labels: <?= json_encode($labels) ?>, datasets: [
-            { label: 'Barang Masuk', data: <?= json_encode($data_masuk) ?>, backgroundColor: 'rgba(37,99,235,0.85)', borderRadius: 8, barPercentage: 0.7 },
-            { label: 'Barang Keluar', data: <?= json_encode($data_keluar) ?>, backgroundColor: 'rgba(245,158,11,0.85)', borderRadius: 8, barPercentage: 0.7 }
+            { label: 'Barang Masuk', data: <?= json_encode($data_masuk) ?>, backgroundColor: 'rgba(37,99,235,0.85)', borderRadius: 8 },
+            { label: 'Barang Keluar', data: <?= json_encode($data_keluar) ?>, backgroundColor: 'rgba(245,158,11,0.85)', borderRadius: 8 }
         ]},
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, padding: 16 } } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9', drawBorder: false } }, x: { grid: { display: false } } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', align: 'end' } } }
     });
     </script>
 
-
 <?php // ═══════════════════════════════════════
-// DATA BARANG
+// DATA BARANG (Hanya Tampil & Hapus)
 // ═══════════════════════════════════════
 elseif ($page == 'barang'):
-    $edit = null;
-    if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
-        $edit_id = (int)$_GET['edit'];
-        $edit_q = mysqli_query($koneksi, "SELECT * FROM barang WHERE id='$edit_id'");
-        if ($edit_q && mysqli_num_rows($edit_q) > 0) $edit = mysqli_fetch_assoc($edit_q);
-    }
     $search = mysqli_real_escape_string($koneksi, $_GET['search'] ?? '');
-    $filter_kat = (int)($_GET['filter_kat'] ?? 0);
-    $where = [];
-    if (!empty($search)) $where[] = "(b.nama_barang LIKE '%$search%' OR b.kode_barang LIKE '%$search%')";
-    if ($filter_kat > 0) $where[] = "b.kategori_id='$filter_kat'";
-    $where_sql = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
+    $where = !empty($search) ? "WHERE b.nama_barang LIKE '%$search%' OR b.kode_barang LIKE '%$search%'" : '';
 ?>
-    <div class="page-header">
-        <div><h4><i class="bi bi-box-seam text-primary"></i> Data Barang</h4><small>Kelola master data barang gudang</small></div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBarang"><i class="bi bi-plus-circle"></i> Tambah Barang</button>
+    <div class="page-header mb-3">
+        <div><h4><i class="bi bi-box-seam text-primary"></i> Data Barang</h4></div>
     </div>
     <div class="panel mb-3">
         <form method="GET" action="index.php" class="row g-2">
             <input type="hidden" name="page" value="barang">
-            <div class="col-md-5"><input type="text" name="search" class="form-control" placeholder="🔍 Cari nama atau kode barang..." value="<?= htmlspecialchars($search) ?>"></div>
-            <div class="col-md-4"><select name="filter_kat" class="form-select">
-                <option value="0">Semua Kategori</option>
-                <?php $kat_q = mysqli_query($koneksi, "SELECT * FROM kategori ORDER BY nama_kategori"); while ($k = mysqli_fetch_assoc($kat_q)): ?>
-                <option value="<?= $k['id'] ?>" <?= $filter_kat == $k['id'] ? 'selected' : '' ?>><?= $k['nama_kategori'] ?></option>
-                <?php endwhile; ?>
-            </select></div>
+            <div class="col-md-9"><input type="text" name="search" class="form-control" placeholder="🔍 Cari nama atau kode barang..." value="<?= htmlspecialchars($search) ?>"></div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i> Cari</button>
                 <a href="index.php?page=barang" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
@@ -211,28 +179,23 @@ elseif ($page == 'barang'):
     <div class="panel">
         <div class="table-responsive">
             <table class="table align-middle">
-                <thead><tr><th style="width:60px;">NO</th><th>KODE</th><th>NAMA BARANG</th><th>KATEGORI</th><th>STOK</th><th>RAK</th><th>HARGA</th><th style="width:120px;">AKSI</th></tr></thead>
+                <thead><tr><th>NO</th><th>KODE</th><th>NAMA BARANG</th><th>KATEGORI</th><th>STOK</th><th>RAK</th><th>AKSI</th></tr></thead>
                 <tbody>
                 <?php
                 $no = 1;
-                $q = mysqli_query($koneksi, "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.kategori_id=k.id $where_sql ORDER BY b.id DESC");
+                $q = mysqli_query($koneksi, "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.kategori_id=k.id $where ORDER BY b.id DESC");
                 if (mysqli_num_rows($q) == 0): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox" style="font-size:40px;color:#cbd5e1;"></i>
-                        <div class="mt-2"><?= (!empty($search) || $filter_kat > 0) ? 'Tidak ada barang yang cocok' : 'Belum ada data barang' ?></div>
-                    </td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-5">Belum ada data barang</td></tr>
                 <?php else: while ($r = mysqli_fetch_assoc($q)): ?>
                 <tr>
                     <td><?= $no++ ?></td>
                     <td><code><?= $r['kode_barang'] ?></code></td>
                     <td><strong><?= $r['nama_barang'] ?></strong></td>
                     <td><?= $r['nama_kategori'] ?? '-' ?></td>
-                    <td><strong><?= $r['stok'] ?></strong> <?= $r['satuan'] ?> <?= badgeStok($r['stok'], $r['stok_minimal']) ?></td>
+                    <td><strong><?= $r['stok'] ?></strong> <?= $r['satuan'] ?></td>
                     <td><?= $r['lokasi_rak'] ?></td>
-                    <td><?= rupiah($r['harga']) ?></td>
                     <td>
-                        <a href="index.php?page=barang&edit=<?= $r['id'] ?>" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                        <a href="config/proses.php?action=hapus_barang&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin hapus <?= $r['nama_barang'] ?>?')"><i class="bi bi-trash-fill"></i></a>
+                        <a href="config/proses.php?action=hapus_barang&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin hapus?')"><i class="bi bi-trash-fill"></i></a>
                     </td>
                 </tr>
                 <?php endwhile; endif; ?>
@@ -240,179 +203,6 @@ elseif ($page == 'barang'):
             </table>
         </div>
     </div>
-    <div class="modal fade" id="modalBarang" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="config/proses.php">
-                    <input type="hidden" name="action" value="simpan_barang">
-                    <input type="hidden" name="id" value="<?= $edit['id'] ?? '' ?>">
-                    <div class="modal-header" style="background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;">
-                        <h5><i class="bi bi-box-seam"></i> <?= $edit ? 'Edit Barang' : 'Tambah Barang' ?></h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3"><label class="form-label">Kode Barang <span class="text-danger">*</span></label><input type="text" name="kode_barang" class="form-control" value="<?= htmlspecialchars($edit['kode_barang'] ?? '') ?>" placeholder="Contoh: BRG-001" required></div>
-                        <div class="mb-3"><label class="form-label">Nama Barang <span class="text-danger">*</span></label><input type="text" name="nama_barang" class="form-control" value="<?= htmlspecialchars($edit['nama_barang'] ?? '') ?>" placeholder="Contoh: Mouse Logitech" required></div>
-                        <div class="mb-3"><label class="form-label">Kategori <span class="text-danger">*</span></label>
-                            <select name="kategori_id" class="form-select" required>
-                                <option value="">- Pilih Kategori -</option>
-                                <?php $k = mysqli_query($koneksi, "SELECT * FROM kategori ORDER BY nama_kategori"); while ($kk = mysqli_fetch_assoc($k)): ?>
-                                <option value="<?= $kk['id'] ?>" <?= ($edit && $edit['kategori_id']==$kk['id'])?'selected':'' ?>><?= $kk['nama_kategori'] ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Satuan</label><input type="text" name="satuan" class="form-control" value="<?= htmlspecialchars($edit['satuan'] ?? 'pcs') ?>" placeholder="pcs / box / roll"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Stok</label><input type="number" name="stok" class="form-control" value="<?= $edit['stok'] ?? 0 ?>" min="0"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Stok Minimal</label><input type="number" name="stok_minimal" class="form-control" value="<?= $edit['stok_minimal'] ?? 5 ?>" min="0"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Lokasi Rak</label><input type="text" name="lokasi_rak" class="form-control" value="<?= htmlspecialchars($edit['lokasi_rak'] ?? '') ?>" placeholder="Contoh: Rak A-01"></div>
-                        </div>
-                        <div class="mb-3"><label class="form-label">Harga (Rp)</label><input type="number" name="harga" class="form-control" value="<?= $edit['harga'] ?? 0 ?>" min="0"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Batal</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill"></i> <?= $edit ? 'Update' : 'Simpan' ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php if ($edit): ?>
-    <script>document.addEventListener('DOMContentLoaded', function() { new bootstrap.Modal(document.getElementById('modalBarang')).show(); });</script>
-    <?php endif; ?>
-
-
-<?php // ═══════════════════════════════════════
-// KATEGORI
-// ═══════════════════════════════════════
-elseif ($page == 'kategori'):
-    $edit = null;
-    if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
-        $edit_id = (int)$_GET['edit'];
-        $edit_q = mysqli_query($koneksi, "SELECT * FROM kategori WHERE id='$edit_id'");
-        if ($edit_q && mysqli_num_rows($edit_q) > 0) $edit = mysqli_fetch_assoc($edit_q);
-    }
-?>
-    <div class="page-header">
-        <div><h4><i class="bi bi-tags-fill text-primary"></i> Kategori Barang</h4><small>Kelola kategori dan zona gudang</small></div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalKategori"><i class="bi bi-plus-circle"></i> Tambah Kategori</button>
-    </div>
-    <div class="panel">
-        <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th style="width:60px;">NO</th><th>NAMA KATEGORI</th><th>ZONA</th><th>KETERANGAN</th><th style="width:120px;">AKSI</th></tr></thead>
-                <tbody>
-                <?php $no=1; $q=mysqli_query($koneksi,"SELECT * FROM kategori ORDER BY id");
-                while($r=mysqli_fetch_assoc($q)): ?>
-                <tr>
-                    <td><?= $no++ ?></td>
-                    <td><strong><?= $r['nama_kategori'] ?></strong></td>
-                    <td><span class="badge bg-primary">Zona <?= $r['kode_zona'] ?></span></td>
-                    <td><?= $r['keterangan'] ?></td>
-                    <td>
-                        <a href="index.php?page=kategori&edit=<?= $r['id'] ?>" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                        <a href="config/proses.php?action=hapus_kategori&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus kategori ini?')"><i class="bi bi-trash-fill"></i></a>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="modal fade" id="modalKategori" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="config/proses.php">
-                    <input type="hidden" name="action" value="simpan_kategori">
-                    <input type="hidden" name="id" value="<?= $edit['id'] ?? '' ?>">
-                    <div class="modal-header" style="background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;">
-                        <h5><i class="bi bi-tag-fill"></i> <?= $edit ? 'Edit' : 'Tambah' ?> Kategori</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3"><label class="form-label">Nama Kategori <span class="text-danger">*</span></label><input type="text" name="nama_kategori" class="form-control" value="<?= htmlspecialchars($edit['nama_kategori'] ?? '') ?>" required></div>
-                        <div class="mb-3"><label class="form-label">Kode Zona <span class="text-danger">*</span></label><input type="text" name="kode_zona" class="form-control" value="<?= htmlspecialchars($edit['kode_zona'] ?? '') ?>" maxlength="2" required></div>
-                        <div class="mb-3"><label class="form-label">Keterangan</label><textarea name="keterangan" class="form-control" rows="3"><?= htmlspecialchars($edit['keterangan'] ?? '') ?></textarea></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill"></i> <?= $edit ? 'Update' : 'Simpan' ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php if ($edit): ?>
-    <script>document.addEventListener('DOMContentLoaded', function() { new bootstrap.Modal(document.getElementById('modalKategori')).show(); });</script>
-    <?php endif; ?>
-
-
-<?php // ═══════════════════════════════════════
-// SUPPLIER
-// ═══════════════════════════════════════
-elseif ($page == 'supplier'):
-    $edit = null;
-    if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
-        $edit_id = (int)$_GET['edit'];
-        $edit_q = mysqli_query($koneksi, "SELECT * FROM supplier WHERE id='$edit_id'");
-        if ($edit_q && mysqli_num_rows($edit_q) > 0) $edit = mysqli_fetch_assoc($edit_q);
-    }
-?>
-    <div class="page-header">
-        <div><h4><i class="bi bi-truck text-primary"></i> Data Supplier</h4><small>Kelola data pemasok barang</small></div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSupplier"><i class="bi bi-plus-circle"></i> Tambah Supplier</button>
-    </div>
-    <div class="panel">
-        <div class="table-responsive">
-            <table class="table">
-                <thead><tr><th style="width:60px;">NO</th><th>NAMA SUPPLIER</th><th>ALAMAT</th><th>TELEPON</th><th style="width:120px;">AKSI</th></tr></thead>
-                <tbody>
-                <?php $no=1; $q=mysqli_query($koneksi,"SELECT * FROM supplier ORDER BY id");
-                while($r=mysqli_fetch_assoc($q)): ?>
-                <tr>
-                    <td><?= $no++ ?></td>
-                    <td><strong><?= $r['nama_supplier'] ?></strong></td>
-                    <td><?= $r['alamat'] ?></td>
-                    <td><?= $r['telepon'] ?></td>
-                    <td>
-                        <a href="index.php?page=supplier&edit=<?= $r['id'] ?>" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                        <a href="config/proses.php?action=hapus_supplier&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus supplier ini?')"><i class="bi bi-trash-fill"></i></a>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="modal fade" id="modalSupplier" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="config/proses.php">
-                    <input type="hidden" name="action" value="simpan_supplier">
-                    <input type="hidden" name="id" value="<?= $edit['id'] ?? '' ?>">
-                    <div class="modal-header" style="background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;">
-                        <h5><i class="bi bi-truck"></i> <?= $edit ? 'Edit' : 'Tambah' ?> Supplier</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3"><label class="form-label">Nama Supplier <span class="text-danger">*</span></label><input type="text" name="nama_supplier" class="form-control" value="<?= htmlspecialchars($edit['nama_supplier'] ?? '') ?>" required></div>
-                        <div class="mb-3"><label class="form-label">Alamat</label><textarea name="alamat" class="form-control" rows="3"><?= htmlspecialchars($edit['alamat'] ?? '') ?></textarea></div>
-                        <div class="mb-3"><label class="form-label">Telepon</label><input type="text" name="telepon" class="form-control" value="<?= htmlspecialchars($edit['telepon'] ?? '') ?>"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill"></i> <?= $edit ? 'Update' : 'Simpan' ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php if ($edit): ?>
-    <script>document.addEventListener('DOMContentLoaded', function() { new bootstrap.Modal(document.getElementById('modalSupplier')).show(); });</script>
-    <?php endif; ?>
-
 
 <?php // ═══════════════════════════════════════
 // BARANG MASUK
@@ -422,8 +212,8 @@ elseif ($page == 'masuk'):
     $where = !empty($search) ? "WHERE b.nama_barang LIKE '%$search%' OR b.kode_barang LIKE '%$search%'" : '';
 ?>
     <div class="page-header">
-        <div><h4><i class="bi bi-arrow-down-circle-fill text-success"></i> Barang Masuk</h4><small>Catat transaksi barang masuk ke gudang</small></div>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalMasuk"><i class="bi bi-plus-circle"></i> Tambah Barang Masuk</button>
+        <div><h4><i class="bi bi-arrow-down-circle-fill text-success"></i> Barang Masuk</h4></div>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalMasuk"><i class="bi bi-plus-circle"></i> Tambah Barang Masuk</button>
     </div>
     <div class="panel mb-3">
         <form method="GET" action="index.php" class="row g-2">
@@ -438,27 +228,27 @@ elseif ($page == 'masuk'):
     <div class="panel">
         <div class="table-responsive">
             <table class="table">
-                <thead><tr><th style="width:60px;">NO</th><th>TANGGAL</th><th>BARANG</th><th>SUPPLIER</th><th>JUMLAH</th><th>NO PO</th><th style="width:100px;">AKSI</th></tr></thead>
+                <thead><tr><th>NO</th><th>TANGGAL</th><th>BARANG</th><th>JUMLAH MASUK</th><th>AKSI</th></tr></thead>
                 <tbody>
                 <?php $no=1;
-                $q = mysqli_query($koneksi, "SELECT bm.*, b.nama_barang, b.satuan, s.nama_supplier FROM barang_masuk bm JOIN barang b ON bm.barang_id=b.id LEFT JOIN supplier s ON bm.supplier_id=s.id $where ORDER BY bm.id DESC");
+                $q = mysqli_query($koneksi, "SELECT bm.*, b.nama_barang, b.satuan FROM barang_masuk bm JOIN barang b ON bm.barang_id=b.id $where ORDER BY bm.id DESC");
                 if (mysqli_num_rows($q) == 0): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-inbox" style="font-size:40px;color:#cbd5e1;"></i><div class="mt-2">Belum ada transaksi barang masuk</div></td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-5">Belum ada transaksi</td></tr>
                 <?php else: while($r=mysqli_fetch_assoc($q)): ?>
                 <tr>
                     <td><?= $no++ ?></td>
                     <td><?= tglIndo($r['tanggal']) ?></td>
                     <td><strong><?= $r['nama_barang'] ?></strong></td>
-                    <td><?= $r['nama_supplier'] ?? '-' ?></td>
                     <td><span class="badge bg-success">+<?= $r['jumlah'] ?> <?= $r['satuan'] ?></span></td>
-                    <td><code><?= $r['no_po'] ?: '-' ?></code></td>
-                    <td><a href="config/proses.php?action=hapus_masuk&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus transaksi? Stok akan dikurangi.')"><i class="bi bi-trash-fill"></i></a></td>
+                    <td><a href="config/proses.php?action=hapus_masuk&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus?')"><i class="bi bi-trash-fill"></i></a></td>
                 </tr>
                 <?php endwhile; endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
+    
+    <!-- MODAL MASUK (Super Simpel) -->
     <div class="modal fade" id="modalMasuk">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -469,38 +259,93 @@ elseif ($page == 'masuk'):
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3"><label class="form-label">Barang <span class="text-danger">*</span></label>
-                            <select name="id_barang" class="form-select" required>
-                                <option value="">- Pilih Barang -</option>
-                                <?php $b=mysqli_query($koneksi,"SELECT * FROM barang ORDER BY nama_barang"); while($bb=mysqli_fetch_assoc($b)): ?>
-                                <option value="<?= $bb['id'] ?>"><?= $bb['kode_barang'] ?> - <?= $bb['nama_barang'] ?> (Stok: <?= $bb['stok'] ?>)</option>
-                                <?php endwhile; ?>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Pilih Opsi <span class="text-danger">*</span></label>
+                            <select name="id_barang" id="selectBarang" class="form-select" required onchange="toggleForm(this.value)">
+                                <option value="baru" style="color: #0d6efd; font-weight: 600;">
+                                    + Daftarkan Barang Baru
+                                </option>
+                                <optgroup label="Barang yang Sudah Ada (Tambah Stok)">
+                                    <?php $b=mysqli_query($koneksi,"SELECT * FROM barang ORDER BY nama_barang"); while($bb=mysqli_fetch_assoc($b)): ?>
+                                    <option value="<?= $bb['id'] ?>"><?= $bb['kode_barang'] ?> - <?= $bb['nama_barang'] ?> (Sisa: <?= $bb['stok'] ?>)</option>
+                                    <?php endwhile; ?>
+                                </optgroup>
                             </select>
                         </div>
-                        <div class="mb-3"><label class="form-label">Supplier</label>
-                            <select name="supplier_id" class="form-select">
-                                <option value="">- Pilih Supplier -</option>
-                                <?php $s=mysqli_query($koneksi,"SELECT * FROM supplier"); while($ss=mysqli_fetch_assoc($s)): ?>
-                                <option value="<?= $ss['id'] ?>"><?= $ss['nama_supplier'] ?></option>
-                                <?php endwhile; ?>
-                            </select>
+
+                        <!-- FORM BARANG BARU -->
+                        <div id="formBarangBaru" style="display: none; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+                            <h6 class="text-dark mb-3 fw-bold" style="font-size: 14px;"><i class="bi bi-file-earmark-plus"></i> Formulir Barang Baru</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kode Barang <span class="text-danger">*</span></label>
+                                    <input type="text" name="kode_baru" id="inputKode" class="form-control" placeholder="Contoh: JRG-007">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Satuan</label>
+                                    <input type="text" name="satuan_baru" class="form-control" value="pcs">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
+                                <input type="text" name="nama_baru" id="inputNama" class="form-control" placeholder="Contoh: Kabel LAN 5m">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                                <select name="kategori_baru" class="form-select">
+                                    <?php $k=mysqli_query($koneksi,"SELECT * FROM kategori"); while($kk=mysqli_fetch_assoc($k)): ?>
+                                    <option value="<?= $kk['id'] ?>"><?= $kk['nama_kategori'] ?></option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
                         </div>
+
+                        <!-- FORM JUMLAH STOK (Selalu Muncul) -->
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Jumlah <span class="text-danger">*</span></label><input type="number" name="jumlah" class="form-control" min="1" required></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Tanggal <span class="text-danger">*</span></label><input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required></div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Jumlah Stok Masuk <span class="text-danger">*</span></label>
+                                <input type="number" name="jumlah" id="inputJumlah" class="form-control" min="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Tanggal <span class="text-danger">*</span></label>
+                                <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                            </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">No. PO</label><input type="text" name="no_po" class="form-control" placeholder="Opsional"></div>
-                        <div class="mb-3"><label class="form-label">Keterangan</label><textarea name="keterangan" class="form-control" rows="2"></textarea></div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle-fill"></i> Simpan</button>
+                        <button type="submit" class="btn btn-success">Simpan Data</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPT MUNCULIN FORM -->
+    <script>
+    function toggleForm(val) {
+        var formBaru = document.getElementById('formBarangBaru');
+        var inputKode = document.getElementById('inputKode');
+        var inputNama = document.getElementById('inputNama');
+
+        if (val === 'baru') {
+            formBaru.style.display = 'block';
+            inputKode.required = true;
+            inputNama.required = true;
+        } else {
+            formBaru.style.display = 'none';
+            inputKode.required = false;
+            inputNama.required = false;
+        }
+    }
+    
+    // Set default saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleForm('baru'); // Memunculkan form barang baru secara default
+    });
+    </script>
 
 <?php // ═══════════════════════════════════════
 // BARANG KELUAR
@@ -510,8 +355,8 @@ elseif ($page == 'keluar'):
     $where = !empty($search) ? "WHERE b.nama_barang LIKE '%$search%' OR b.kode_barang LIKE '%$search%'" : '';
 ?>
     <div class="page-header">
-        <div><h4><i class="bi bi-arrow-up-circle-fill text-danger"></i> Barang Keluar</h4><small>Catat transaksi barang keluar dari gudang</small></div>
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalKeluar"><i class="bi bi-plus-circle"></i> Tambah Barang Keluar</button>
+        <div><h4><i class="bi bi-arrow-up-circle-fill text-danger"></i> Barang Keluar</h4></div>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalKeluar"><i class="bi bi-plus-circle"></i> Tambah Barang Keluar</button>
     </div>
     <div class="panel mb-3">
         <form method="GET" action="index.php" class="row g-2">
@@ -526,27 +371,27 @@ elseif ($page == 'keluar'):
     <div class="panel">
         <div class="table-responsive">
             <table class="table">
-                <thead><tr><th style="width:60px;">NO</th><th>TANGGAL</th><th>BARANG</th><th>TUJUAN</th><th>JUMLAH</th><th>NO SJ</th><th style="width:100px;">AKSI</th></tr></thead>
+                <thead><tr><th>NO</th><th>TANGGAL</th><th>BARANG</th><th>PEMINJAM</th><th>JUMLAH</th><th>AKSI</th></tr></thead>
                 <tbody>
                 <?php $no=1;
                 $q = mysqli_query($koneksi, "SELECT bk.*, b.nama_barang, b.satuan FROM barang_keluar bk JOIN barang b ON bk.barang_id=b.id $where ORDER BY bk.id DESC");
                 if (mysqli_num_rows($q) == 0): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-inbox" style="font-size:40px;color:#cbd5e1;"></i><div class="mt-2">Belum ada transaksi barang keluar</div></td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-5">Belum ada transaksi</td></tr>
                 <?php else: while($r=mysqli_fetch_assoc($q)): ?>
                 <tr>
                     <td><?= $no++ ?></td>
                     <td><?= tglIndo($r['tanggal']) ?></td>
                     <td><strong><?= $r['nama_barang'] ?></strong></td>
-                    <td><?= $r['tujuan'] ?: '-' ?></td>
+                    <td><strong><?= $r['nama_peminjam'] ?></strong><br><small><?= $r['no_identitas'] ?></small></td>
                     <td><span class="badge bg-danger">-<?= $r['jumlah'] ?> <?= $r['satuan'] ?></span></td>
-                    <td><code><?= $r['no_surat_jalan'] ?: '-' ?></code></td>
-                    <td><a href="config/proses.php?action=hapus_keluar&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus transaksi? Stok akan dikembalikan.')"><i class="bi bi-trash-fill"></i></a></td>
+                    <td><a href="config/proses.php?action=hapus_keluar&id=<?= $r['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus?')"><i class="bi bi-trash-fill"></i></a></td>
                 </tr>
                 <?php endwhile; endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
+    
     <div class="modal fade" id="modalKeluar">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -569,195 +414,38 @@ elseif ($page == 'keluar'):
                             <div class="col-md-6 mb-3"><label class="form-label">Jumlah <span class="text-danger">*</span></label><input type="number" name="jumlah" class="form-control" min="1" required></div>
                             <div class="col-md-6 mb-3"><label class="form-label">Tanggal <span class="text-danger">*</span></label><input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required></div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Tujuan</label><input type="text" name="tujuan" class="form-control" placeholder="Contoh: Divisi IT / Lab A"></div>
-                        <div class="mb-3"><label class="form-label">No. Surat Jalan</label><input type="text" name="no_surat_jalan" class="form-control"></div>
-                        <div class="mb-3"><label class="form-label">Keterangan</label><textarea name="keterangan" class="form-control" rows="2"></textarea></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Nama Peminjam <span class="text-danger">*</span></label><input type="text" name="nama_peminjam" class="form-control" placeholder="Budi" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">No Identitas <span class="text-danger">*</span></label><input type="text" name="no_identitas" class="form-control" placeholder="210123" required></div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-danger"><i class="bi bi-check-circle-fill"></i> Simpan</button>
+                        <button type="submit" class="btn btn-danger">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-
 <?php // ═══════════════════════════════════════
-// KARTU STOK
+// LAPORAN & LAINNYA
 // ═══════════════════════════════════════
 elseif ($page == 'kartu_stok'):
-    require 'kartu_stok.php';
-    exit;
-
-// ═══════════════════════════════════════
-// RIWAYAT TRANSAKSI
-// ═══════════════════════════════════════
+    require 'kartu_stok.php'; exit;
 elseif ($page == 'riwayat'):
-    require 'riwayat_transaksi.php';
-    exit;
-
-// ═══════════════════════════════════════
-// LAPORAN KATEGORI
-// ═══════════════════════════════════════
+    require 'riwayat_transaksi.php'; exit;
 elseif ($page == 'laporan_kat'):
-    require 'laporan_kategori.php';
-    exit;
-
-// ═══════════════════════════════════════
-// LAPORAN
-// ═══════════════════════════════════════
+    require 'laporan_kategori.php'; exit;
 elseif ($page == 'laporan'):
 ?>
     <div class="page-header">
+        <div><h4><i class="bi bi-file-earmark-bar-graph-fill text-primary"></i> Laporan</h4></div>
         <div>
-            <h4><i class="bi bi-file-earmark-bar-graph-fill text-primary"></i> Laporan</h4>
-            <small>Ringkasan data inventaris gudang</small>
-        </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCetak">
-            <i class="bi bi-printer-fill"></i> Cetak Laporan
-        </button>
-    </div>
-    
-    <div class="modal fade" id="modalCetak" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="GET" action="cetak_laporan.php" target="_blank">
-                    <div class="modal-header" style="background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;">
-                        <h5><i class="bi bi-printer-fill"></i> Cetak Laporan</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Jenis Laporan</label>
-                            <select name="jenis" class="form-select" required>
-                                <option value="stok">Laporan Stok Barang</option>
-                                <option value="masuk">Laporan Barang Masuk</option>
-                                <option value="keluar">Laporan Barang Keluar</option>
-                                <option value="minim">Laporan Stok Minim</option>
-                            </select>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Dari Tanggal</label>
-                                <input type="date" name="dari" class="form-control" value="<?= date('Y-m-01') ?>">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Sampai Tanggal</label>
-                                <input type="date" name="sampai" class="form-control" value="<?= date('Y-m-d') ?>">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-printer-fill"></i> Buka Halaman Cetak</button>
-                    </div>
-                </form>
-            </div>
+            <a href="config/export_excel.php?jenis=stok" class="btn btn-success"><i class="bi bi-file-earmark-excel-fill"></i> Export Excel</a>
+            <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#modalCetak"><i class="bi bi-printer-fill"></i> Cetak</button>
         </div>
     </div>
-    
-    <div class="row g-3 mb-3">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-stack text-primary"></i> Laporan Stok Barang</div>
-                <div class="panel-subtitle">Daftar seluruh barang dan stok saat ini</div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>KODE</th><th>NAMA</th><th>STOK</th><th>STATUS</th></tr></thead>
-                        <tbody>
-                        <?php $q=mysqli_query($koneksi,"SELECT * FROM barang ORDER BY stok ASC");
-                        while($r=mysqli_fetch_assoc($q)): ?>
-                        <tr>
-                            <td><code><?= $r['kode_barang'] ?></code></td>
-                            <td><?= $r['nama_barang'] ?></td>
-                            <td><strong><?= $r['stok'] ?></strong> <?= $r['satuan'] ?></td>
-                            <td><?= badgeStok($r['stok'], $r['stok_minimal']) ?></td>
-                        </tr>
-                        <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Laporan Stok Minim</div>
-                <div class="panel-subtitle">Barang yang perlu segera di-restock</div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>KODE</th><th>NAMA</th><th>STOK</th><th>KURANG</th></tr></thead>
-                        <tbody>
-                        <?php $q=mysqli_query($koneksi,"SELECT *, (stok_minimal-stok) as kurang FROM barang WHERE stok <= stok_minimal ORDER BY kurang DESC");
-                        if (mysqli_num_rows($q) == 0): ?>
-                            <tr><td colspan="4" class="text-center text-muted py-4">
-                                <i class="bi bi-check-circle-fill text-success" style="font-size:28px;"></i>
-                                <div class="mt-2">Semua stok aman</div>
-                            </td></tr>
-                        <?php else: while($r=mysqli_fetch_assoc($q)): ?>
-                        <tr>
-                            <td><code><?= $r['kode_barang'] ?></code></td>
-                            <td><?= $r['nama_barang'] ?></td>
-                            <td><span class="badge bg-danger"><?= $r['stok'] ?></span></td>
-                            <td><strong class="text-danger">-<?= $r['kurang'] ?></strong></td>
-                        </tr>
-                        <?php endwhile; endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-arrow-down-circle-fill text-success"></i> Riwayat Barang Masuk</div>
-                <div class="panel-subtitle">10 transaksi terakhir</div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>TANGGAL</th><th>BARANG</th><th>JUMLAH</th></tr></thead>
-                        <tbody>
-                        <?php $q=mysqli_query($koneksi,"SELECT bm.*, b.nama_barang FROM barang_masuk bm JOIN barang b ON bm.barang_id=b.id ORDER BY bm.id DESC LIMIT 10");
-                        if (mysqli_num_rows($q) == 0): ?>
-                            <tr><td colspan="3" class="text-center text-muted py-4">Belum ada data</td></tr>
-                        <?php else: while($r=mysqli_fetch_assoc($q)): ?>
-                        <tr>
-                            <td><?= tglIndo($r['tanggal']) ?></td>
-                            <td><?= $r['nama_barang'] ?></td>
-                            <td><span class="badge bg-success">+<?= $r['jumlah'] ?></span></td>
-                        </tr>
-                        <?php endwhile; endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-title"><i class="bi bi-arrow-up-circle-fill text-danger"></i> Riwayat Barang Keluar</div>
-                <div class="panel-subtitle">10 transaksi terakhir</div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>TANGGAL</th><th>BARANG</th><th>JUMLAH</th></tr></thead>
-                        <tbody>
-                        <?php $q=mysqli_query($koneksi,"SELECT bk.*, b.nama_barang FROM barang_keluar bk JOIN barang b ON bk.barang_id=b.id ORDER BY bk.id DESC LIMIT 10");
-                        if (mysqli_num_rows($q) == 0): ?>
-                            <tr><td colspan="3" class="text-center text-muted py-4">Belum ada data</td></tr>
-                        <?php else: while($r=mysqli_fetch_assoc($q)): ?>
-                        <tr>
-                            <td><?= tglIndo($r['tanggal']) ?></td>
-                            <td><?= $r['nama_barang'] ?></td>
-                            <td><span class="badge bg-danger">-<?= $r['jumlah'] ?></span></td>
-                        </tr>
-                        <?php endwhile; endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
 <?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -1,10 +1,23 @@
--- ═══ DATABASE WMS UNJANI ═══
--- Sistem Informasi Manajemen Pergudangan
--- Laboratorium Logistik UNJANI
--- Tanpa Login / Tanpa User
+-- ═══════════════════════════════════════════
+-- DATABASE WMS LAB FSI (Fakultas Sains & Informatika)
+-- Siap Import (Data Lengkap + Riwayat)
+-- ═══════════════════════════════════════════
+
+-- 1. Matikan Foreign Key sementara agar tabel bisa dihapus
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 2. Hapus tabel lama (Jika ada)
+DROP TABLE IF EXISTS barang_keluar;
+DROP TABLE IF EXISTS barang_masuk;
+DROP TABLE IF EXISTS barang;
+DROP TABLE IF EXISTS supplier;
+DROP TABLE IF EXISTS kategori;
+
+-- 3. Nyalakan kembali Foreign Key
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════
--- KATEGORI
+-- BUAT TABEL KATEGORI & SUPPLIER
 -- ═══════════════════════════════════════════
 CREATE TABLE kategori (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -13,14 +26,11 @@ CREATE TABLE kategori (
     keterangan TEXT
 );
 
-INSERT INTO kategori (nama_kategori, kode_zona, keterangan) VALUES
-('Elektronik', 'A', 'Barang elektronik'),
-('Komponen Logistik', 'B', 'Komponen gudang'),
-('Alat Tulis & Kantor', 'C', 'ATK');
+INSERT INTO kategori (id, nama_kategori, kode_zona, keterangan) VALUES
+(1, 'Perangkat Komputer', 'A', 'PC, Monitor, Proyektor, dan Aksesoris'),
+(2, 'Perangkat Jaringan', 'B', 'Router, Switch, Kabel UTP, Alat Jaringan'),
+(3, 'Alat Tulis & Administrasi', 'C', 'Kebutuhan ATK Asisten dan Dosen');
 
--- ═══════════════════════════════════════════
--- SUPPLIER
--- ═══════════════════════════════════════════
 CREATE TABLE supplier (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_supplier VARCHAR(100) NOT NULL,
@@ -28,12 +38,12 @@ CREATE TABLE supplier (
     telepon VARCHAR(20)
 );
 
-INSERT INTO supplier (nama_supplier, alamat, telepon) VALUES
-('PT Maju Jaya', 'Jl. Sudirman No.1', '021-1234567'),
-('CV Sumber Rejeki', 'Jl. Ahmad Yani No.5', '022-7654321');
+INSERT INTO supplier (id, nama_supplier, alamat, telepon) VALUES
+(1, 'PT Maju Jaya Komputer', 'Jl. Sudirman No.1', '021-1234567'),
+(2, 'CV Sumber Jaringan', 'Jl. Ahmad Yani No.5', '022-7654321');
 
 -- ═══════════════════════════════════════════
--- BARANG
+-- BUAT TABEL BARANG (14 Barang Lab FSI)
 -- ═══════════════════════════════════════════
 CREATE TABLE barang (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,40 +58,29 @@ CREATE TABLE barang (
     FOREIGN KEY (kategori_id) REFERENCES kategori(id) ON DELETE SET NULL
 );
 
-INSERT INTO barang (kode_barang, nama_barang, kategori_id, satuan, stok, stok_minimal, lokasi_rak, harga) VALUES
-('ELK-001', 'Komputer PC Desktop', 1, 'unit', 20, 5, 'Rak A-01', 5500000),
-('ELK-002', 'Laptop Asus VivoBook', 1, 'unit', 10, 3, 'Rak A-02', 7500000),
-('ELK-003', 'Monitor LED 21.5 inch', 1, 'unit', 25, 5, 'Rak A-03', 1500000),
-('ELK-004', 'Proyektor Epson', 1, 'unit', 5, 2, 'Rak A-04', 4500000),
-('ELK-005', 'Keyboard USB Standard', 1, 'pcs', 30, 10, 'Rak A-05', 120000),
-('ELK-006', 'Mouse Optik Logitech', 1, 'pcs', 40, 10, 'Rak A-06', 75000),
-('ELK-007', 'Printer Canon MP287', 1, 'unit', 8, 2, 'Rak A-07', 1850000),
-('ELK-008', 'Scanner Epson L3110', 1, 'unit', 4, 1, 'Rak A-08', 2500000),
-('ELK-009', 'Speaker Aktif', 1, 'unit', 12, 3, 'Rak A-09', 250000),
-('ELK-010', 'Headset Gaming', 1, 'pcs', 15, 5, 'Rak A-10', 350000),
-('ELK-011', 'Kabel HDMI 2m', 1, 'pcs', 30, 10, 'Rak A-11', 35000),
-('ELK-012', 'Flashdisk 32GB', 1, 'pcs', 20, 5, 'Rak A-12', 85000),
-('KMP-001', 'RAM DDR4 8GB', 2, 'pcs', 15, 3, 'Rak B-01', 480000),
-('KMP-002', 'SSD 256GB SATA', 2, 'pcs', 10, 3, 'Rak B-02', 550000),
-('KMP-003', 'Power Supply 500W', 2, 'unit', 8, 2, 'Rak B-03', 450000),
-('KMP-004', 'Thermal Paste', 2, 'tube', 20, 5, 'Rak B-04', 35000),
-('KMP-005', 'Kipas CPU Cooler', 2, 'pcs', 12, 3, 'Rak B-05', 150000),
-('KMP-006', 'Motherboard B460M', 2, 'unit', 6, 2, 'Rak B-06', 1250000),
-('KMP-007', 'Kabel SATA Data', 2, 'pcs', 30, 10, 'Rak B-07', 15000),
-('KMP-008', 'Kabel Power CPU', 2, 'pcs', 25, 10, 'Rak B-08', 25000),
-('ATK-001', 'Kertas A4 80gr', 3, 'rim', 50, 10, 'Rak C-01', 55000),
-('ATK-002', 'Kertas F4 70gr', 3, 'rim', 40, 10, 'Rak C-02', 50000),
-('ATK-003', 'Pulpen Standard', 3, 'box', 30, 5, 'Rak C-03', 15000),
-('ATK-004', 'Spidol Whiteboard', 3, 'pcs', 25, 5, 'Rak C-04', 12000),
-('ATK-005', 'Penghapus Whiteboard', 3, 'pcs', 15, 5, 'Rak C-05', 8000),
-('ATK-006', 'Penggaris 30cm', 3, 'pcs', 20, 5, 'Rak C-06', 5000),
-('ATK-007', 'Gunting Kertas', 3, 'pcs', 10, 3, 'Rak C-07', 15000),
-('ATK-008', 'Lem Kertas Stick', 3, 'pcs', 25, 5, 'Rak C-08', 7000),
-('ATK-009', 'Stapler Medium', 3, 'unit', 8, 2, 'Rak C-09', 35000),
-('ATK-010', 'Isi Staples No.10', 3, 'box', 30, 10, 'Rak C-10', 5000);
+INSERT INTO barang (id, kode_barang, nama_barang, kategori_id, satuan, stok, stok_minimal, lokasi_rak, harga) VALUES
+-- Rak A: Komputer
+(1, 'ELK-001', 'Komputer PC Desktop', 1, 'unit', 20, 5, 'Rak A-01', 5500000),
+(2, 'ELK-002', 'Monitor LED 21.5 inch', 1, 'unit', 25, 5, 'Rak A-02', 1500000),
+(3, 'ELK-003', 'Proyektor Epson', 1, 'unit', 5, 2, 'Rak A-03', 4500000),
+(4, 'ELK-004', 'Keyboard USB Standard', 1, 'pcs', 30, 10, 'Rak A-04', 120000),
+(5, 'ELK-005', 'Mouse Optik Logitech', 1, 'pcs', 30, 10, 'Rak A-05', 75000),
+
+-- Rak B: Jaringan
+(6, 'JRG-001', 'Router Mikrotik RB951', 2, 'unit', 10, 3, 'Rak B-01', 850000),
+(7, 'JRG-002', 'Switch Hub 16 Port', 2, 'unit', 5, 2, 'Rak B-02', 600000),
+(8, 'JRG-003', 'Kabel UTP Cat6 (Roll)', 2, 'roll', 4, 1, 'Rak B-03', 1200000),
+(9, 'JRG-004', 'Konektor RJ45 (Box)', 2, 'box', 6, 2, 'Rak B-04', 150000),
+(10, 'JRG-005', 'Crimping Tool RJ45', 2, 'pcs', 10, 3, 'Rak B-05', 85000),
+(11, 'JRG-006', 'Modul Praktikum Algoritma', 2, 'buku', 40, 10, 'Rak B-06', 35000),
+
+-- Rak C: ATK
+(12, 'ATK-001', 'Kertas A4 80gr', 3, 'rim', 50, 10, 'Rak C-01', 55000),
+(13, 'ATK-002', 'Pulpen Standard', 3, 'box', 30, 5, 'Rak C-02', 15000),
+(14, 'ATK-003', 'Spidol Whiteboard', 3, 'pcs', 25, 5, 'Rak C-03', 12000);
 
 -- ═══════════════════════════════════════════
--- BARANG MASUK
+-- BUAT TABEL BARANG MASUK & KELUAR
 -- ═══════════════════════════════════════════
 CREATE TABLE barang_masuk (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,9 +95,6 @@ CREATE TABLE barang_masuk (
     FOREIGN KEY (supplier_id) REFERENCES supplier(id) ON DELETE SET NULL
 );
 
--- ═══════════════════════════════════════════
--- BARANG KELUAR
--- ═══════════════════════════════════════════
 CREATE TABLE barang_keluar (
     id INT AUTO_INCREMENT PRIMARY KEY,
     barang_id INT NOT NULL,
@@ -110,3 +106,37 @@ CREATE TABLE barang_keluar (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (barang_id) REFERENCES barang(id) ON DELETE CASCADE
 );
+
+-- ═══════════════════════════════════════════
+-- ISI RIWAYAT BARANG MASUK
+-- ═══════════════════════════════════════════
+INSERT INTO barang_masuk (barang_id, supplier_id, jumlah, tanggal, no_po, keterangan) VALUES
+(1, 1, 20, '2026-10-01', 'PO-2026-001', 'Pengadaan PC Lab Baru'),
+(2, 1, 25, '2026-10-01', 'PO-2026-001', 'Pengadaan Monitor Lab'),
+(3, 1, 5,  '2026-10-02', 'PO-2026-002', 'Pembelian Proyektor'),
+(6, 2, 10, '2026-10-03', 'PO-2026-003', 'Pembelian Router Mikrotik'),
+(7, 2, 5,  '2026-10-03', 'PO-2026-003', 'Pembelian Switch Hub'),
+(8, 2, 4,  '2026-10-04', 'PO-2026-004', 'Kabel UTP untuk Lab'),
+(11, 2, 40, '2026-10-05', 'PO-2026-005', 'Cetak Modul Praktikum'),
+(12, 1, 50, '2026-10-05', 'PO-2026-006', 'Kertas A4');
+
+-- ═══════════════════════════════════════════
+-- ISI RIWAYAT BARANG KELUAR (Peminjaman)
+-- ═══════════════════════════════════════════
+INSERT INTO barang_keluar (barang_id, jumlah, tanggal, tujuan, no_surat_jalan, keterangan) VALUES
+(3, 1, '2026-10-10', 'Budi (NIM 210123)', 'SJ-2026-001', 'Pinjam Proyektor Seminar'),
+(6, 2, '2026-10-12', 'Asisten Lab (Andi)', 'SJ-2026-003', 'Pinjam Router Praktikum'),
+(8, 1, '2026-10-12', 'Asisten Lab (Andi)', 'SJ-2026-003', 'Kabel UTP Praktikum'),
+(11, 10, '2026-10-13', 'Mahasiswa Kelas A', 'SJ-2026-004', 'Distribusi Modul'),
+(12, 5, '2026-10-14', 'Bagian Administrasi', 'SJ-2026-005', 'Print Laporan');
+
+-- ═══════════════════════════════════════════
+-- SINKRONISASI STOK (Update otomatis stok berkurang)
+-- ═══════════════════════════════════════════
+UPDATE barang b
+LEFT JOIN (
+    SELECT barang_id, SUM(jumlah) as total_keluar 
+    FROM barang_keluar 
+    GROUP BY barang_id
+) bk ON b.id = bk.barang_id
+SET b.stok = b.stok - IFNULL(bk.total_keluar, 0);
